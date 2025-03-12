@@ -105,7 +105,7 @@ def run_code_command(
         project_dir: The directory path containing the code to process
         command_name: The name of the command for logging and messages (e.g., "lint", "format")
         command: The command to run
-        commit_message: The commit message to use if changes are made
+        commit_message: Unused parameter kept for compatibility
 
     Returns:
         A string containing the result of the operation
@@ -129,18 +129,6 @@ def run_code_command(
 
             return f"Error: No {command_key} command configured in codemcp.toml"
 
-        # Check if directory is in a git repository
-        is_git_repo = is_git_repository(full_dir_path)
-
-        # If it's a git repo, commit any pending changes before running the command
-        if is_git_repo:
-            logging.info(f"Committing any pending changes before {command_name}")
-            commit_result = commit_changes(
-                full_dir_path, f"Snapshot before auto-{command_name}"
-            )
-            if not commit_result[0]:
-                logging.warning(f"Failed to commit pending changes: {commit_result[1]}")
-
         # Run the command
         try:
             result = run_command(
@@ -152,24 +140,6 @@ def run_code_command(
             )
 
             # Additional logging is already done by run_command
-
-            # If it's a git repo, commit any changes made by the command
-            if is_git_repo:
-                has_changes = check_for_changes(full_dir_path)
-                if has_changes:
-                    logging.info(f"Changes detected after {command_name}, committing")
-                    success, commit_result_message = commit_changes(
-                        full_dir_path, commit_message
-                    )
-
-                    if success:
-                        return f"Code {command_name} successful and changes committed:\n{result.stdout}"
-                    else:
-                        logging.warning(
-                            f"Failed to commit {command_name} changes: {commit_result_message}"
-                        )
-                        return f"Code {command_name} successful but failed to commit changes:\n{result.stdout}\nCommit error: {commit_result_message}"
-
             return f"Code {command_name} successful:\n{result.stdout}"
         except subprocess.CalledProcessError as e:
             # Map the command_name to keep backward compatibility with existing tests
