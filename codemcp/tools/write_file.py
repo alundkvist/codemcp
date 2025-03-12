@@ -2,10 +2,8 @@
 
 import os
 
-from ..git import commit_changes
 from .file_utils import (
     check_file_path_and_permissions,
-    check_git_tracking_for_existing_file,
     write_text_content,
 )
 
@@ -62,10 +60,10 @@ def detect_line_endings(file_path: str) -> str:
 
 
 def detect_repo_line_endings(directory: str) -> str:
-    """Detect the line endings used in a repository.
+    """Detect the line endings used in a directory.
 
     Args:
-        directory: The repository directory
+        directory: The directory path
 
     Returns:
         The detected line endings ('\n' or '\r\n')
@@ -81,27 +79,21 @@ def write_file_content(file_path: str, content: str, description: str = "") -> s
     Args:
         file_path: The absolute path to the file to write
         content: The content to write to the file
-        description: Short description of the change
+        description: Short description of the change (for logging purposes)
 
     Returns:
         A success message or an error message
 
     Note:
         This function allows creating new files that don't exist yet.
-        For existing files, it will reject attempts to write to files that are not tracked by git.
-        Files must be tracked in the git repository before they can be modified.
+        It will write directly to the local filesystem without Git integration.
 
     """
     try:
         # Validate file path and permissions
         is_valid, error_message = check_file_path_and_permissions(file_path)
         if not is_valid:
-            return error_message
-
-        # Check git tracking for existing files
-        is_tracked, track_error = check_git_tracking_for_existing_file(file_path)
-        if not is_tracked:
-            return f"Error: {track_error}"
+            return error_message or "Invalid file path or permissions"
 
         # Determine encoding and line endings
         old_file_exists = os.path.exists(file_path)
@@ -118,14 +110,6 @@ def write_file_content(file_path: str, content: str, description: str = "") -> s
         # Write the content with proper encoding and line endings
         write_text_content(file_path, content, encoding, line_endings)
 
-        # Commit the changes
-        git_message = ""
-        success, message = commit_changes(file_path, description)
-        if success:
-            git_message = f"\nChanges committed to git: {description}"
-        else:
-            git_message = f"\nFailed to commit changes to git: {message}"
-
-        return f"Successfully wrote to {file_path}{git_message}"
+        return f"Successfully wrote to {file_path}"
     except Exception as e:
         return f"Error writing file: {e!s}"

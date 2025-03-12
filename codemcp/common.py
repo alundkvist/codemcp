@@ -75,7 +75,7 @@ def get_edit_snippet(
     snippet_lines = edited_lines[start_line:end_line]
 
     # Format with line numbers
-    result = []
+    result: list[str] = []
     for i, line in enumerate(snippet_lines):
         line_num = start_line + i + 1
         result.append(f"{line_num:4d} | {line}")
